@@ -1,0 +1,6 @@
+fastapi
+pyodbc
+python-decouple
+uvicorn
+jinja2
+requests

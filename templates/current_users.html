@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Data</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sage ERP - Concurrent Users</h1>
+    <p>Sage ERP Application Users: {{ request.appusers }}</p>
+    <p>Sage Business Intelligence Users: {{ request.biusers }}</p>
+    <hr>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Workstation</th>
+                <th>Login Time</th>
+                <th>Last Activity</th>
+                <th>Sage ERP Application User</th>
+                <th>Sage Business Intelligence User</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in request.users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.workstation }}</td>
+                <td>{{ user.login_time }}</td>
+                <td>{{ user.last_activty }}</td>
+                <td>{{ user.appuser }}</td>
+                <td>{{ user.biuser }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
