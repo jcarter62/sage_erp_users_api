@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse, HTMLResponse
 from decouple import config, UndefinedValueError
+from datetime import datetime
 import requests
 
 from wmisdb import WMISDB
@@ -48,6 +49,7 @@ async def root(request: Request):
     The root path of the API
     """
     user_data = await get_sage_erp_users()
+
     rsp = templates.TemplateResponse("current_users.html", {"request": user_data})
     return rsp
 
@@ -58,6 +60,33 @@ async def get_sage_erp_users():
     """
     Get the list of Sage ERP users
     """
+
+    def remove_domain(user):
+        """
+        Remove the domain from the user name
+        """
+        if user.find('\\') > 0:
+            return user.split('\\')[1]
+        return user
+
+    def reformat_datetime(dt):
+        """
+        Reformat the datetime string from YYYY-MM-DD HH:MM:SS.Z to MM/DD/YYYY HH:MM AM/PM
+        """
+        if dt is None:
+            return ''
+        dtmp = dt.replace('T', ' ').replace('Z', '')
+        dtmp = datetime.strptime(dtmp, '%Y-%m-%d %H:%M:%S.%f')
+        result = dtmp.strftime('%m/%d/%Y %I:%M %p')
+        return result
+
+    def sort_users(users):
+        """
+        Sort the users by sort_key
+        """
+        return sorted(users, key=lambda k: k['sort_key'])
+
+
     try:
         db = WMISDB()
         users = db.get_sage_erp_users()
@@ -68,6 +97,12 @@ async def get_sage_erp_users():
                 appusers += 1
             if u['biuser'] == 'X':
                 biusers += 1
+            u['username'] = remove_domain(u['username'])
+            u['login_time'] = reformat_datetime(u['login_time'])
+            u['last_activty'] = reformat_datetime(u['last_activty'])
+            u['sort_key'] = datetime.strptime(u['last_activty'], '%m/%d/%Y %I:%M %p')
+
+        users = sort_users(users)
 
         data = {"users": users, "message": "Success",
                 "appusers": appusers, "biusers": biusers}
