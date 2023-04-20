@@ -48,5 +48,30 @@
             {% endfor %}
         </tbody>
     </table>
+    <div id="refreshchk"></div>
 </body>
+<script>
+    var time_until_refresh = 30;
+    function refreshCheck() {
+        var refreshchk = document.getElementById("refreshchk");
+        refreshchk.innerHTML = "Refresh in " + time_until_refresh +" seconds...";
+    }
+
+    function start_countdown() {
+        var countdown = setInterval(function() {
+            time_until_refresh--;
+            if (time_until_refresh <= 0) {
+                clearInterval(countdown);
+                window.location.reload();
+            }
+            else {
+                refreshCheck();
+            }
+        }, 1000);
+    }
+
+    start_countdown();
+
+</script>
+
 </html>
