@@ -88,11 +88,10 @@ class WMISDB:
                 val = str(row[i])
                 name = name.lower()
                 i += 1
-                r[name] = val
+                r[name] = val.__str__()
         except DBError as err:
             print(f'Error in extract_row: {err}')
             r['error'] = f'Error in extract_row: {err}'
-            
         return r
 
 

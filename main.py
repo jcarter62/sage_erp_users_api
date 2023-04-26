@@ -3,10 +3,10 @@ The main module of the sgma-api system
 """
 from fastapi import FastAPI, Request, status
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from decouple import config, UndefinedValueError
 from datetime import datetime
-import requests
+import pathlib
 
 from wmisdb import WMISDB
 
@@ -43,6 +43,16 @@ async def root(request: Request):
     return rsp
 
 
+@app.get("/favicon.ico")
+async def favicon():
+    """
+    Return the favicon.ico file
+    """
+    file_name = 'favicon.ico'
+    file_path = pathlib.Path(__file__).parent.resolve() / file_name
+    return FileResponse(path=file_path, headers={"Content-Type": "image/x-icon"})
+
+
 @app.get("/showusers")
 async def root(request: Request):
     """
@@ -69,15 +79,32 @@ async def get_sage_erp_users():
             return user.split('\\')[1]
         return user
 
-    def reformat_datetime(dt):
+    def reformat_datetime(dt: str):
         """
         Reformat the datetime string from YYYY-MM-DD HH:MM:SS.Z to MM/DD/YYYY HH:MM AM/PM
         """
         if dt is None:
             return ''
-        dtmp = dt.replace('T', ' ').replace('Z', '')
-        dtmp = datetime.strptime(dtmp, '%Y-%m-%d %H:%M:%S.%f')
-        result = dtmp.strftime('%m/%d/%Y %I:%M %p')
+        datetime_tmp = dt.replace('T', ' ').replace('Z', '')
+
+        # check to see if .%f is in the string, and add it if not
+        if not('.' in datetime_tmp):
+            datetime_tmp = f'{datetime_tmp}.000000'
+
+        dtmp = None
+        for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
+            try:
+                dtmp = datetime.strptime(datetime_tmp, fmt)
+                break
+            except Exception as err:
+                print(f'Error in reformat_datetime: {err}')
+                pass
+
+        if dtmp is None:
+            result = ''
+        else:
+            result = dtmp.strftime('%m/%d/%Y %I:%M %p')
+
         return result
 
     def sort_users(users):
@@ -98,8 +125,9 @@ async def get_sage_erp_users():
             if u['biuser'] == 'X':
                 biusers += 1
             u['username'] = remove_domain(u['username'])
-            u['login_time'] = reformat_datetime(u['login_time'])
-            u['last_activty'] = reformat_datetime(u['last_activty'])
+
+            u['login_time'] = reformat_datetime(u['login_time'].__str__())
+            u['last_activty'] = reformat_datetime(u['last_activty'].__str__())
             u['sort_key'] = datetime.strptime(u['last_activty'], '%m/%d/%Y %I:%M %p')
 
         users = sort_users(users)
@@ -122,7 +150,7 @@ async def before_request(request: Request, call_next):
     try:
         method = request.method
         path = request.url.path
-        print(f"method: {method}, path: {path}")
+        # print(f"method: {method}, path: {path}")
         ip_addr = str(request.client.host)
         if not is_allowed(ip_addr):
             data = {"message": f"IP {ip_addr} is not allowed to access this resource"}
