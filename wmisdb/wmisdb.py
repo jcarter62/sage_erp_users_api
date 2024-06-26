@@ -66,7 +66,8 @@ class WMISDB:
         con_str += 'DATABASE=' + self._database + ';'
         con_str += 'UID=' + self._username + ';'
         con_str += 'PWD=' + self._password + ';'
-        con_str += 'PORT=1433;'
+        if self._instance != '':
+            con_str += 'PORT=1433;'
         return con_str
 
     def _connection_(self):
